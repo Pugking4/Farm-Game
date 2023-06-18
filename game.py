@@ -25,6 +25,7 @@ class myGame(arcade.Window):
 
         # Msic
         self.message = None
+        self.growth_rate = 1/60
 
     def setup(self, MAP_SIZE, LEFT_MARGIN, BOTTOM_MARGIN, TILE_SIZE, SPRITE_SCALING, MOVEMENT_SPEED):
         # Set up your game here
@@ -48,8 +49,8 @@ class myGame(arcade.Window):
             for j in range(self.MAP_SIZE[0]):
                 row.append(Tile(0))
             self.map.append(row)
-        self.map[0][0].type = 1
-        self.map[4][6].type = 1
+        self.map[0][0].type = 10
+        self.map[4][6].type = 10
 
         # Set up the player
         self.player_sprite = Player(":resources:images/animated_characters/female_person/femalePerson_idle.png", self.SPRITE_SCALING)
@@ -88,24 +89,26 @@ class myGame(arcade.Window):
                 self.map[i][j].bounds = ((x-self.TILE_SIZE/2, x+self.TILE_SIZE/2), (y-self.TILE_SIZE/2, y+self.TILE_SIZE/2))
 
                 # Draw the item
-                if self.map[i][j].type == 1:
+                if self.map[i][j].type == 10:
                     arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.DARK_BROWN)
+                elif self.map[i][j].type == 20:
+                    arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.YELLOW_GREEN)
+                elif self.map[i][j].type == 30:
+                    arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.PASTEL_YELLOW)
                 else:
                     arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.SAP_GREEN)
         
         if self.message:
             if self.message.fade_in[1]+1 < self.message.frames <= self.message.fade_in[0]:
                 self.message.alpha += 255 / self.message.fade
-                print(self.message.alpha)
+                #print(self.message.alpha)
             elif self.message.fade_out[1] <= self.message.frames < self.message.fade_out[0]:
                 self.message.alpha -= 255 / self.message.fade
-                print(self.message.alpha)
+                #print(self.message.alpha)
             else:
                 self.message.alpha = 255
-                print("reset")
-            
-            #print(self.message.alpha)
-            #print(self.message.fade_in, self.message.frames)
+                #print("reset")
+
             arcade.Text(self.message.text, self.player_sprite.center_x, self.player_sprite.center_y + 50, (0, 0, 0, int(self.message.alpha)), 20, anchor_x="center").draw()
             self.message.frames -= 1
             if self.message.frames < 0:
@@ -129,44 +132,61 @@ class myGame(arcade.Window):
                     # Player is within the bounds of the tile
                     print(f"Player is on tile type {j.type}", f"({count_x}, {count_y})")
                     self.current_tile = self.map[count_y][count_x]
-                else:
-                    # Player is outside the bounds of the tile
-                    #print("Player is over the bounds of the tile!")
-                    pass
+                
+                if j.type == 20:
+                    if j.growth >= j.grow_cap:
+                        j.type = 30
+                    else:
+                        j.growth += self.growth_rate
+        
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
 
-        if key == arcade.key.UP:
+        if key == arcade.key.W:
             self.up_pressed = True
             self.update_player_speed()
-        elif key == arcade.key.DOWN:
+        elif key == arcade.key.S:
             self.down_pressed = True
             self.update_player_speed()
-        elif key == arcade.key.LEFT:
+        elif key == arcade.key.A:
             self.left_pressed = True
             self.update_player_speed()
-        elif key == arcade.key.RIGHT:
+        elif key == arcade.key.D:
             self.right_pressed = True
             self.update_player_speed()
-        elif key == arcade.key.SPACE:
-            self.current_tile.type = 1
-            print("Tile changed to type 1")
-            self.message = Message("Tile changed to type 1", 150, True)
+        elif key == arcade.key.C:
+            if self.current_tile.type == 0:
+                self.current_tile.type = 10
+                print("Tile changed to type 1")
+                self.message = Message("Sowed the soil", 150, True)
+            elif self.current_tile.type == 30:
+                self.current_tile.wheat()
+                print("Tile changed to type 20")
+                self.message = Message("Harvested wheat", 150, True)
+        elif key == arcade.key.F:
+            if self.current_tile.type == 10:
+                self.current_tile.wheat()
+                self.message = Message("Planted wheat", 150, True)
+            else:
+                self.message = Message("No soil to plant in", 75, True)
+        elif key == arcade.key.R:
+            if self.current_tile.type == 20 or self.current_tile.type == 30:
+                self.message = Message(f"{self.current_tile.growth}/{self.current_tile.grow_cap}", 150, True)
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
 
-        if key == arcade.key.UP:
+        if key == arcade.key.W:
             self.up_pressed = False
             self.update_player_speed()
-        elif key == arcade.key.DOWN:
+        elif key == arcade.key.S:
             self.down_pressed = False
             self.update_player_speed()
-        elif key == arcade.key.LEFT:
+        elif key == arcade.key.A:
             self.left_pressed = False
             self.update_player_speed()
-        elif key == arcade.key.RIGHT:
+        elif key == arcade.key.D:
             self.right_pressed = False
             self.update_player_speed()
     
