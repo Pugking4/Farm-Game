@@ -12,4 +12,4 @@ class Wheat(Produce):
 
 class Carrot(Produce):
     def __init__(self, amount=1):
-        super().__init__(1, 3, "", 'Carrot', amount)
+        super().__init__(1, 4, "", 'Carrot', amount)

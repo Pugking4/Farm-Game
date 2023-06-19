@@ -8,6 +8,7 @@ from produce import *
 from functions import *
 from shop import Shop
 from money import Money
+import random
 
 class myGame(arcade.Window):
     """ Main application class. """
@@ -39,7 +40,7 @@ class myGame(arcade.Window):
         self.evaporation_rate = 1/60/10
         
 
-    def setup(self, MAP_SIZE, LEFT_MARGIN, BOTTOM_MARGIN, TILE_SIZE, SPRITE_SCALING, MOVEMENT_SPEED, SCALING, GUI_BUFFER, ICON_SIZE):
+    def setup(self, MAP_SIZE, LEFT_MARGIN, BOTTOM_MARGIN, TILE_SIZE, SPRITE_SCALING, MOVEMENT_SPEED, SCALING, GUI_BUFFER, ICON_SIZE, GRASS_TEXTURES):
         # Set up your game here
         #Constants
 
@@ -52,6 +53,7 @@ class myGame(arcade.Window):
         self.SCALING = SCALING
         self.GUI_BUFFER = GUI_BUFFER
         self.ICON_SIZE = ICON_SIZE
+        self.GRASS_TEXTURES = GRASS_TEXTURES
 
         # Sprite setup
         self.player_list = arcade.SpriteList()
@@ -61,15 +63,25 @@ class myGame(arcade.Window):
                         (self.SCREEN_WIDTH - (ICON_SIZE + GUI_BUFFER)*2, self.SCREEN_WIDTH - GUI_BUFFER, self.SCREEN_HEIGHT - ICON_SIZE - GUI_BUFFER, self.SCREEN_HEIGHT - GUI_BUFFER),
                         (self.SCREEN_WIDTH - (ICON_SIZE + GUI_BUFFER), self.SCREEN_WIDTH - GUI_BUFFER, self.SCREEN_HEIGHT - ICON_SIZE - GUI_BUFFER, self.SCREEN_HEIGHT - GUI_BUFFER))
 
+        # Calculate the offset for positioning the original map within the expanded area
+        offset_x = max((self.MAP_SIZE[0] - 7) // 2, 0)
+        offset_y = max((self.MAP_SIZE[1] - 5) // 2, 0)
+
         # Generate map
         self.map = []
         for i in range(self.MAP_SIZE[1]):
             row = []
             for j in range(self.MAP_SIZE[0]):
-                row.append(Tile(0))
+                tex = random.choice(GRASS_TEXTURES)
+                if i >= offset_y and i < offset_y + 5 and j >= offset_x and j < offset_x + 7:
+                    tile_type = 0  # Special property for the original map
+                else:
+                    tile_type = 99  # Default property for the expanded area
+                row.append(Tile(tile_type, tex))
             self.map.append(row)
-        self.map[0][0].type = 10
-        self.map[4][6].type = 10
+
+
+
 
         self.current_tile = self.map[0][0]
         self.SEED_TYPE_DICT = {
@@ -110,8 +122,8 @@ class myGame(arcade.Window):
             # Loop for each column
             for j in range(len(self.map[i])):
                 # Calculate our location
-                x = j * self.TILE_SIZE + self.LEFT_MARGIN
-                y = i * self.TILE_SIZE + self.BOTTOM_MARGIN
+                x = j * self.TILE_SIZE + self.TILE_SIZE/2# + self.LEFT_MARGIN
+                y = i * self.TILE_SIZE + self.TILE_SIZE/2 # + self.BOTTOM_MARGIN
 
                 self.map[i][j].bounds = ((x-self.TILE_SIZE/2, x+self.TILE_SIZE/2), (y-self.TILE_SIZE/2, y+self.TILE_SIZE/2))
 
@@ -126,6 +138,8 @@ class myGame(arcade.Window):
                     arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.CARROT_ORANGE)
                 elif self.map[i][j].type == 31:
                     arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.DEEP_CARROT_ORANGE)
+                elif self.map[i][j].type == 99:
+                    arcade.draw_texture_rectangle(x, y, self.TILE_SIZE, self.TILE_SIZE, self.map[i][j].tex)
                 else:
                     arcade.draw_rectangle_filled(x, y, self.TILE_SIZE, self.TILE_SIZE, arcade.color.SAP_GREEN)
         
@@ -191,7 +205,28 @@ class myGame(arcade.Window):
             arcade.draw_rectangle_filled((self.ICON_SIZE/2) + self.GUI_BUFFER, self.SCREEN_HEIGHT - ((self.ICON_SIZE/2) + self.GUI_BUFFER), (self.ICON_SIZE), (self.ICON_SIZE), arcade.color.RED_DEVIL)
             arcade.draw_rectangle_filled(self.SCREEN_WIDTH - ((self.ICON_SIZE/2) + self.GUI_BUFFER), self.SCREEN_HEIGHT - ((self.ICON_SIZE/2) + self.GUI_BUFFER), (self.ICON_SIZE), (self.ICON_SIZE), arcade.color.DUTCH_WHITE)
             arcade.draw_rectangle_filled(self.SCREEN_WIDTH - ((self.ICON_SIZE*1.5) + self.GUI_BUFFER*2), self.SCREEN_HEIGHT - ((self.ICON_SIZE/2) + self.GUI_BUFFER), (self.ICON_SIZE), (self.ICON_SIZE), arcade.color.DUTCH_WHITE)
-        
+
+            #arcade.draw_lrtb_rectangle_filled(self.GUI_BUFFER + (40/self.SCALING)*1 + (320/self.SCALING)*0, self.GUI_BUFFER + (320/self.SCALING)*1 + (40/self.SCALING), self.GUI_BUFFER + (40/self.SCALING) + (320/self.SCALING), self.GUI_BUFFER + (40/self.SCALING), arcade.color.WHITE)
+            for num, i in enumerate(self.shop.stock):
+                arcade.draw_lrtb_rectangle_filled(self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num, 
+                                                  self.GUI_BUFFER + (320/self.SCALING)*(num+1) + (40/self.SCALING)*(num+1), 
+                                                  self.GUI_BUFFER + (40/self.SCALING) + (320/self.SCALING), 
+                                                  self.GUI_BUFFER + (40/self.SCALING), 
+                                                  arcade.color.WHITE)
+                arcade.Text(i, self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num + (320/self.SCALING)/2, self.GUI_BUFFER + (40/self.SCALING) + 40/self.SCALING, arcade.color.BLACK, 20/self.SCALING, anchor_x="center").draw()
+                self.shop.stock[i][1] = ((self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num, self.GUI_BUFFER + (320/self.SCALING)*(num+1) + (40/self.SCALING)*(num+1)), (self.GUI_BUFFER + (40/self.SCALING), self.GUI_BUFFER + (40/self.SCALING) + (320/self.SCALING)))
+                
+            for num, i in enumerate(self.shop.sell):
+                arcade.draw_lrtb_rectangle_filled(self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num, 
+                                                  self.GUI_BUFFER + (320/self.SCALING)*(num+1) + (40/self.SCALING)*(num+1), 
+                                                  (self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (40/self.SCALING)), 
+                                                  (self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2)) - (320/self.SCALING) - (40/self.SCALING), 
+                                                  arcade.color.WHITE)
+                arcade.Text(i, self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num + (320/self.SCALING)/2, self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (320/self.SCALING) - (40/self.SCALING) + 40/self.SCALING, arcade.color.BLACK, 20/self.SCALING, anchor_x="center").draw()
+                self.shop.sell[i][1] = ((self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num, self.GUI_BUFFER + (320/self.SCALING)*(num+1) + (40/self.SCALING)*(num+1)), (self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (320/self.SCALING) - (40/self.SCALING), self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (40/self.SCALING)))
+
+            #print((self.GUI_BUFFER + (320/self.SCALING)*1 + (40/self.SCALING)) - (self.GUI_BUFFER + (40/self.SCALING)*1 + (320/self.SCALING)*0))
+            #print((self.GUI_BUFFER + (40/self.SCALING)) - (self.GUI_BUFFER + (40/self.SCALING) + (320/self.SCALING)))
         
 
     def update(self, delta_time):
@@ -260,7 +295,7 @@ class myGame(arcade.Window):
                         self.player_sprite.inventory[index].amount += 1
                     else:
                             self.player_sprite.inventory.append(Carrot(1))
-                self.current_tile.type -= 10
+                self.current_tile.type = 10
                 self.current_tile.growth = 0
 
                 print(f"Tile changed to type {self.current_tile.type}")
@@ -272,8 +307,11 @@ class myGame(arcade.Window):
                     self.current_tile.wheat()
                 elif int(str(f"{self.player_sprite.hand.type:02d}")[1]) == 1 and self.player_sprite.hand.amount > 0:
                     self.current_tile.carrot()
-                self.player_sprite.hand.amount -= 1
-                self.message = Message(f"Planted {self.player_sprite.hand.name}", 150, True)
+                if self.player_sprite.hand.amount > 0:
+                    self.player_sprite.hand.amount -= 1
+                    self.message = Message(f"Planted {self.player_sprite.hand.name}", 150, True)
+                else:
+                    self.message = Message("No seeds to plant", 75, True)
             else:
                 self.message = Message("No soil to plant in", 75, True)
 
