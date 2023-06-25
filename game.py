@@ -213,7 +213,7 @@ class myGame(arcade.Window):
                                                   self.GUI_BUFFER + (40/self.SCALING) + (320/self.SCALING), 
                                                   self.GUI_BUFFER + (40/self.SCALING), 
                                                   arcade.color.WHITE)
-                arcade.Text(i, self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num + (320/self.SCALING)/2, self.GUI_BUFFER + (40/self.SCALING) + 40/self.SCALING, arcade.color.BLACK, 20/self.SCALING, anchor_x="center").draw()
+                arcade.Text(f"Buy {i}", self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num + (320/self.SCALING)/2, self.GUI_BUFFER + (40/self.SCALING) + 40/self.SCALING, arcade.color.BLACK, 20/self.SCALING, anchor_x="center").draw()
                 self.shop.stock[i][1] = ((self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num, self.GUI_BUFFER + (320/self.SCALING)*(num+1) + (40/self.SCALING)*(num+1)), (self.GUI_BUFFER + (40/self.SCALING), self.GUI_BUFFER + (40/self.SCALING) + (320/self.SCALING)))
                 
             for num, i in enumerate(self.shop.sell):
@@ -222,7 +222,7 @@ class myGame(arcade.Window):
                                                   (self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (40/self.SCALING)), 
                                                   (self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2)) - (320/self.SCALING) - (40/self.SCALING), 
                                                   arcade.color.WHITE)
-                arcade.Text(i, self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num + (320/self.SCALING)/2, self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (320/self.SCALING) - (40/self.SCALING) + 40/self.SCALING, arcade.color.BLACK, 20/self.SCALING, anchor_x="center").draw()
+                arcade.Text(f"Sell {i}", self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num + (320/self.SCALING)/2, self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (320/self.SCALING) - (40/self.SCALING) + 40/self.SCALING, arcade.color.BLACK, 20/self.SCALING, anchor_x="center").draw()
                 self.shop.sell[i][1] = ((self.GUI_BUFFER + (40/self.SCALING)*(num+1) + (320/self.SCALING)*num, self.GUI_BUFFER + (320/self.SCALING)*(num+1) + (40/self.SCALING)*(num+1)), (self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (320/self.SCALING) - (40/self.SCALING), self.SCREEN_HEIGHT-(self.ICON_SIZE + self.GUI_BUFFER*2) - (40/self.SCALING)))
 
             #print((self.GUI_BUFFER + (320/self.SCALING)*1 + (40/self.SCALING)) - (self.GUI_BUFFER + (40/self.SCALING)*1 + (320/self.SCALING)*0))
@@ -240,7 +240,7 @@ class myGame(arcade.Window):
             for count_x, j in enumerate(i):
                 if j.bounds[0][0] <= self.player_sprite.center_x <= j.bounds[0][1] and j.bounds[1][0] <= self.player_sprite.center_y <= j.bounds[1][1] and j != self.current_tile:
                     # Player is within the bounds of the tile
-                    print(f"Player is on tile type {j.type:02d}", f"({count_x}, {count_y})")
+                    #print(f"Player is on tile type {j.type:02d}", f"({count_x}, {count_y})")
                     self.current_tile = self.map[count_y][count_x]
                 if int(f"{j.type:02d}"[0]) == 2:
                     if j.growth >= j.grow_cap:
@@ -327,9 +327,8 @@ class myGame(arcade.Window):
         elif key == arcade.key.Q:
             self.player_sprite.hand_num += 1
             if self.player_sprite.hand_num >= len(self.player_sprite.inventory):
-                self.player_sprite.hand_num = 0
-            if self.player_sprite.hand == Money:
-                self.player_sprite.hand_num += 1
+                self.player_sprite.hand_num = 1
+
             self.player_sprite.hand = self.player_sprite.inventory[self.player_sprite.hand_num]
             self.message = Message(f"Selected {self.player_sprite.hand.name}", 50, True)
             
@@ -370,5 +369,21 @@ class myGame(arcade.Window):
             elif self.shop.open and self.shop.back_bounds[0][0] <= x <= self.shop.back_bounds[0][1] and self.shop.back_bounds[1][0] <= y <= self.shop.back_bounds[1][1]:
                 print("Back")
             else:
-                print(self.shop.forward_bounds)
-                print(self.shop.back_bounds)
+                for i in self.shop.stock:
+                    if self.shop.stock[i][1][0][0] <= x <= self.shop.stock[i][1][0][1] and self.shop.stock[i][1][1][0] <= y <= self.shop.stock[i][1][1][1]:
+                        print(self.shop.stock[i][0].price)
+                        if self.player_sprite.inventory[0].amount >= self.shop.stock[i][0].price:
+                            self.player_sprite.inventory[0].amount -= self.shop.stock[i][0].price
+                            for j in self.player_sprite.inventory:
+                                if type(j) is type(i):
+                                    self.player_sprite.inventory[i].amount += 1
+                                    add_flag = True
+                            if add_flag == False:
+                                ...
+                            self.player_sprite.inventory.append(i(1))
+                            self.shop.stock[i][0].amount -= 1
+
+                for i in self.shop.sell:
+                    if self.shop.sell[i][1][0][0] <= x <= self.shop.sell[i][1][0][1] and self.shop.sell[i][1][1][0] <= y <= self.shop.sell[i][1][1][1]:
+                        print(self.shop.sell[i][0].price)
+            

@@ -12,7 +12,7 @@ class Player(arcade.Sprite):
         self.SCALING = SCALING
         self.SCREEN_WIDTH = SCREEN_WIDTH
         self.SCREEN_HEIGHT = SCREEN_HEIGHT
-        self.inventory = [Money(amount=0), wheatSeed(amount=5), carrotSeed(amount=2)]
+        self.inventory = [Money(amount=20), wheatSeed(amount=5), carrotSeed(amount=2)]
         self.hand_num = 1
         self.hand = self.inventory[self.hand_num]
 
